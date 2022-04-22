@@ -3,7 +3,7 @@
 # Your andrew id: jhelm
 
 from cmu_112_graphics import *
-
+import copy
 
 
 #------------Classes------------------------
@@ -65,12 +65,41 @@ class Move:
 
 #--------------Animation-------------------
 
-def minimax(app, pokemon1, pokemon2, prevPokemon = None):
-    if prevPokemon == None:
-        if pokemon1.speed > pokemon2.speed:
+def minimaxHelper(app, pokemon1, pokemon2, depth, prevPokemon,
+moveHis, possibleMoves):
+    if pokemon1.fainted == True or pokemon2.fainted == True:
+        qualityOfMove = ((pokemon2.hitpoints / pokemon2.maxHitPoints) -
+                        (pokemon1.hitpoints / pokemon1.maxHitPoints))
+        possibleMoves += [(qualityOfMove, moveHis[0].name, depth)]
+        
+        
+        
+    else:
+        moveHis = moveHis[:depth]
+        
+        if prevPokemon == None or prevPokemon == pokemon1: 
+            for x in range(len(pokemon2.moves)):
+                newPokemon = copy.deepcopy(pokemon1)
+                pokemon2.useMove(newPokemon, pokemon2.moves[x])
+                print('-' + '***' * depth + pokemon2.moves[x].name)
+                if len(moveHis) > depth:
+                    moveHis[-1] = pokemon2.moves[x]
+                else:
+                    moveHis.append(pokemon2.moves[x])
+                for x in moveHis:
+                    print(x.name)
+                minimaxHelper(app, newPokemon, pokemon2, depth + 1, pokemon2, moveHis[: depth + 1], possibleMoves)
+        else:
             for x in range(len(pokemon1.moves)):
-                pass
+                newPokemon = copy.deepcopy(pokemon2)
+                pokemon1.useMove(newPokemon, pokemon1.moves[x])
+                moveHis.append(pokemon1.moves[x])
+                minimaxHelper(app, pokemon1, newPokemon, depth + 1, pokemon1, moveHis[: depth + 1], possibleMoves)
+    
+    return possibleMoves
 
+def minimax(app, pokemon1, pokemon2):
+    return minimaxHelper(app, pokemon1, pokemon2, 0, None, [], [])
 
 def appStarted(app):
     #Booleans to decide whether or not to draw things
@@ -79,10 +108,11 @@ def appStarted(app):
 
 
     bodyslam = Move('bodyslam', 'normal', 85, 100, 'attack')
+    tackle = Move('tackle', 'normal', 35, 100, 'attack')
     app.pokemon1 = Pokemon('Snorlax', 50, 'normal', [bodyslam],
                             110, 65, 65, 110, 100, 30)
     
-    app.pokemon2 = Pokemon('Snorlax', 50, 'normal', [bodyslam],
+    app.pokemon2 = Pokemon('Snorlax', 50, 'normal', [bodyslam ,tackle],
                             110, 65, 65, 110, 100, 30)
     
 
@@ -350,7 +380,8 @@ def mousePressed(app, event):
         if 400 <= x <= 550 and 375 <= y <= 435:
             app.pokemon1.useMove(app.pokemon2, app.pokemon1.moves[0])
         elif 575 <= x <= 725 and 375 <= y <= 435:
-            app.pokemon1.useMove(app.pokemon2, app.pokemon1.moves[1])
+            print(minimax(app, app.pokemon1, app.pokemon2,))
+            #app.pokemon1.useMove(app.pokemon2, app.pokemon1.moves[1])
         elif 400 <= x <= 550 and 450 <= y <= 510:
             app.pokemon1.useMove(app.pokemon2, app.pokemon1.moves[2])
         elif 575 <= x <= 725 and 450 <= y <= 510:
@@ -398,6 +429,7 @@ def redrawAll(app, canvas):
 
 def tpAnimation():
     runApp(width=750, height=550)
+    
 
 
 
